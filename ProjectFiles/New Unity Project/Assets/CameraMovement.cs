@@ -2,15 +2,18 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Cinemachine;
 
-[RequireComponent(typeof(Camera))]
 public class CameraMovement : MonoBehaviour
 {
+
 
 
     public float sensitivity = 1;
     public float mousewheelSensitivity = 1;
 
+    [SerializeField] private CinemachineVirtualCamera townCam;
+    [SerializeField] private Collider2D townBounds;
     [SerializeField] private float timeUntilDrag = .5f;
 
     private float touchTime = 0;
@@ -23,8 +26,8 @@ public class CameraMovement : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        cam = GetComponent<Camera>();
-        fov = cam.orthographicSize;
+        //cam = GetComponent<Camera>();
+        fov = townCam.m_Lens.OrthographicSize;
     }
 
     // Update is called once per frame
@@ -56,12 +59,17 @@ public class CameraMovement : MonoBehaviour
         {
             isDraggin = false;
             touchTime = 0;
+            //Move Towards Middle of Town till in bounds
+            while (!townBounds.bounds.Contains(townCam.transform.position))
+            {
+                townCam.transform.position -= (townCam.transform.position - townBounds.transform.position).normalized;
+            }
         }
-        Debug.Log(Input.GetAxis("Mouse ScrollWheel"));
+        //Debug.Log(Input.GetAxis("Mouse ScrollWheel"));
         if(Input.GetAxis("Mouse ScrollWheel") != 0)
         {
-            cam.orthographicSize = fov + Input.GetAxis("Mouse ScrollWheel") * mousewheelSensitivity;
-            fov = cam.orthographicSize;
+            townCam.m_Lens.OrthographicSize = fov + Input.GetAxis("Mouse ScrollWheel") * mousewheelSensitivity;
+            fov = townCam.m_Lens.OrthographicSize;
         }
     }
 
@@ -69,11 +77,12 @@ public class CameraMovement : MonoBehaviour
     {
         if(!isDraggin)
         {
-            cameraStartPos = transform.position;
+            cameraStartPos = townCam.transform.position;
             clickStartPos = Input.mousePosition;
         }
+        Debug.Log("Is Draggin");
         isDraggin = true;
-        transform.position = cameraStartPos + (clickStartPos - Input.mousePosition)* sensitivity;
+        townCam.transform.position = cameraStartPos + (clickStartPos - Input.mousePosition)* sensitivity;
         //clickStartPos = transform.position;
     }
 }
